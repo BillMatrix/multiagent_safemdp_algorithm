@@ -114,7 +114,6 @@ def init_epsilon_greedy_agents(num_multi_safe_agents, num_single_safe_agents, nu
     return agents
 
 def update_agents(agent):
-    agent.update_self_reward_observation(agent.new_reward)
     agent.update_others_act(agent.new_act)
     agent.update_others_pos(agent.new_pos)
     agent.update_others_reward(agent.new_rewards)
