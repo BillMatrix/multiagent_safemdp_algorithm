@@ -134,15 +134,13 @@ def main(args):
     epsilon = 0.05
     true_value_function = value_iteration(altitudes, world_shape, step_size)
 
-    S0 = []
+    S = []
     for i in range(world_shape[0]):
         for j in range(world_shape[1]):
-            if len(S0) >= num_agents:
-                break
             if altitudes[i, j] > h:
-                S0 += [(i, j)]
+                S += [(i, j)]
 
-    if len(S0) < num_agents:
+    if len(S) < num_agents:
         print('Invalid domain to set {0} agents'.format(num_agents))
         return
 
@@ -155,7 +153,8 @@ def main(args):
 
     for ep in range(epochs):
         print(ep)
-        np.random.shuffle(S0)
+        np.random.shuffle(S)
+        S0 = S[:num_agents]
 
         multi_safe_agents = init_multi_safe_agents(
             num_multi_safe_agents,
@@ -197,7 +196,7 @@ def main(args):
         )
         agents = multi_safe_agents + single_safe_agents + epsilon_greedy_agents
 
-        for t in tqdm(range(20)):
+        for t in tqdm(range(50)):
             new_pos = []
             new_act = []
             new_rewards = []

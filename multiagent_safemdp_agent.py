@@ -55,6 +55,7 @@ class MultiagentSafeMDPAgent():
         self.trajs = [[self.others_pos[agent]] for agent in range(self.num_other_agents)]
         self.num_unsafe = 0
         self.num_joint_unsafe = 0
+        self.coords_visited = []
 
     def choose_action(self):
         for agent in range(self.num_other_agents):
@@ -62,7 +63,7 @@ class MultiagentSafeMDPAgent():
             epsilon = self.epsilons[agent]
 
             possible_coords = []
-            for action in range(5):
+            for action in range(1, 5):
                 possible_coords += [move_coordinate(agent_coord, action, self.world_shape, self.step_size)]
 
             explore_gp_pred = self._get_explore_gp_pred(agent, agent_coord, possible_coords)
@@ -81,7 +82,7 @@ class MultiagentSafeMDPAgent():
         self_possible_vacancy = []
         self_possible_safety = []
         self_possible_actions = []
-        for action in range(5):
+        for action in range(1, 5):
             next_coord = move_coordinate(self.my_pos, action, self.world_shape, self.step_size)
             self_possible_coords += [next_coord]
             prob_vacancy = self.other_agent_vacancy[
@@ -90,8 +91,8 @@ class MultiagentSafeMDPAgent():
             ]
             self_possible_vacancy += [prob_vacancy]
             lr = self.self_l[
-                int(coord[0] / self.step_size[0]),
-                int(coord[1] / self.step_size[1])
+                int(next_coord[0] / self.step_size[0]),
+                int(next_coord[1] / self.step_size[1])
             ]
             self_possible_safety += [lr]
 
@@ -99,29 +100,44 @@ class MultiagentSafeMDPAgent():
                 self_possible_actions += [action]
 
         if len(self_possible_actions) == 0:
-            action, value = max(enumerate(self_possible_safety), key=operator.itemgetter(1))
-            self.my_pos = self_possible_coords[action]
-            return action, self_possible_coords[action]
+            action, value = max(enumerate(self_possible_vacancy), key=operator.itemgetter(1))
+            target_coord = self_possible_coords[action - 1]
+            self.my_pos = target_coord
+            visited = False
+            for c in self.coords_visited:
+                if target_coord[0] == c[0] and target_coord[1] == c[1]:
+                    visited = True
+
+            if not visited:
+                self.coords_visited += [target_coord]
+            return action, target_coord
 
         target_coord = self.my_pos
         target_action = 0
         max_conf_interval = 0
         for action in self_possible_actions:
             ub = self.self_u[
-                int(self_possible_coords[action][0] / self.step_size[0]),
-                int(self_possible_coords[action][1] / self.step_size[1])
+                int(self_possible_coords[action - 1][0] / self.step_size[0]),
+                int(self_possible_coords[action - 1][1] / self.step_size[1])
             ]
             lb = self.self_l[
-                int(self_possible_coords[action][0] / self.step_size[0]),
-                int(self_possible_coords[action][1] / self.step_size[1])
+                int(self_possible_coords[action - 1][0] / self.step_size[0]),
+                int(self_possible_coords[action - 1][1] / self.step_size[1])
             ]
             conf_interval = ub - lb
             if conf_interval > max_conf_interval:
                 max_conf_interval = conf_interval
                 target_action = action
-                target_coord = self_possible_coords[action]
+                target_coord = self_possible_coords[action - 1]
 
         self.my_pos = target_coord
+        visited = False
+        for c in self.coords_visited:
+            if target_coord[0] == c[0] and target_coord[1] == c[1]:
+                visited = True
+
+        if not visited:
+            self.coords_visited += [target_coord]
         return target_action, target_coord
 
     def update_self_reward_observation(self, reward):
@@ -154,7 +170,7 @@ class MultiagentSafeMDPAgent():
     def update_others_act(self, actions):
         for agent in range(self.num_other_agents):
             cur_action = actions[agent]
-            for action in range(5):
+            for action in range(1, 5):
                 prev_coord = self.others_pos[agent]
                 cur_coord = move_coordinate(prev_coord, action, self.world_shape, self.step_size)
                 if action == cur_action:
@@ -195,7 +211,7 @@ class MultiagentSafeMDPAgent():
                     )
                     cur_value = self.others_value_func[agent, i, j]
                     best_next_state = state
-                    for action in range(0, 5):
+                    for action in range(1, 5):
                         new_state = move_coordinate(state, action, self.world_shape, self.step_size)
                         new_i = int(new_state[0] / self.step_size[0])
                         new_j = int(new_state[1] / self.step_size[1])
@@ -272,7 +288,7 @@ class MultiagentSafeMDPAgent():
                 cur_coord = traj[step]
                 possible_coords = [
                     move_coordinate(prev_coord, a, self.world_shape, self.step_size)
-                    for a in range(5)
+                    for a in range(1, 5)
                 ]
                 explore_denominator = sum([
                     np.exp(self.others_explore_gp[agent].predict(
@@ -305,7 +321,7 @@ class MultiagentSafeMDPAgent():
         self.epsilons[agent] = res.x[0]
 
     def _returnable(self, coord):
-        for action in range(5):
+        for action in range(1, 5):
             new_coord = move_coordinate(coord, action, self.world_shape, self.step_size)
             if self.self_l[
                 int(new_coord[0] / self.step_size[0]),

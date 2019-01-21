@@ -54,8 +54,8 @@ class EpsilonGreedyAgent():
             ]
             self_possible_vacancy += [prob_vacancy]
             lr = self.value_functions[
-                int(coord[0] / self.step_size[0]),
-                int(coord[1] / self.step_size[1])
+                int(next_coord[0] / self.step_size[0]),
+                int(next_coord[1] / self.step_size[1])
             ]
             self_possible_safety += [lr]
             if prob_vacancy > self.c:
