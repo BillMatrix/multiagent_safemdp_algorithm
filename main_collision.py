@@ -207,7 +207,7 @@ def main(args):
         )
         agents = multi_safe_agents + single_safe_agents + epsilon_greedy_agents
 
-        for t in tqdm(range(50)):
+        for t in tqdm(range(20)):
             new_pos = []
             new_act = []
             new_rewards = []
@@ -218,7 +218,7 @@ def main(args):
 
                 reward = altitudes[int(next_s[0] / step_size[0]), int(next_s[1] / step_size[1])]
                 new_rewards += [reward]
-                agents[agent].new_reward = reward
+                agents[agent].update_self_reward_observation(reward)
 
             if args.multi == '1':
                 for agent in range(num_agents):
@@ -235,7 +235,6 @@ def main(args):
                         pass
             else:
                 for agent in range(num_agents):
-                    agents[agent].update_self_reward_observation(reward)
                     agents[agent].update_others_act(new_act[:agent] + new_act[agent + 1:])
                     agents[agent].update_others_pos(new_pos[:agent] + new_pos[agent + 1:])
                     agents[agent].update_others_reward(new_rewards[:agent] + new_rewards[agent + 1:])
@@ -244,12 +243,14 @@ def main(args):
             if agent < num_multi_safe_agents:
                 multi_safe_agents_unsafe[ep] += agents[agent].num_unsafe
                 multi_safe_agents_joint_unsafe[ep] += agents[agent].num_joint_unsafe
-            elif agent >= num_multi_safe_agents and agent <= num_multi_safe_agents + num_single_safe_agents:
+            elif agent >= num_multi_safe_agents and agent < num_multi_safe_agents + num_single_safe_agents:
                 single_safe_agents_unsafe[ep] += agents[agent].num_unsafe
                 single_safe_agents_joint_unsafe[ep] += agents[agent].num_joint_unsafe
-            else:
+            elif agent >= num_multi_safe_agents + num_single_safe_agents:
                 epsilon_greedy_agents_unsafe[ep] += agents[agent].num_unsafe
                 epsilon_greedy_agents_joint_unsafe[ep] += agents[agent].num_joint_unsafe
+        print(multi_safe_agents_joint_unsafe, epsilon_greedy_agents_joint_unsafe)
+        print(multi_safe_agents_unsafe, epsilon_greedy_agents_unsafe)
 
     if num_multi_safe_agents != 0:
         multi_safe_agents_unsafe = multi_safe_agents_unsafe / num_multi_safe_agents
