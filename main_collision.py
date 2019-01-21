@@ -207,7 +207,7 @@ def main(args):
         )
         agents = multi_safe_agents + single_safe_agents + epsilon_greedy_agents
 
-        for t in tqdm(range(20)):
+        for t in tqdm(range(50)):
             new_pos = []
             new_act = []
             new_rewards = []
@@ -249,8 +249,6 @@ def main(args):
             elif agent >= num_multi_safe_agents + num_single_safe_agents:
                 epsilon_greedy_agents_unsafe[ep] += agents[agent].num_unsafe
                 epsilon_greedy_agents_joint_unsafe[ep] += agents[agent].num_joint_unsafe
-        print(multi_safe_agents_joint_unsafe, epsilon_greedy_agents_joint_unsafe)
-        print(multi_safe_agents_unsafe, epsilon_greedy_agents_unsafe)
 
     if num_multi_safe_agents != 0:
         multi_safe_agents_unsafe = multi_safe_agents_unsafe / num_multi_safe_agents
