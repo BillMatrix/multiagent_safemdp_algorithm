@@ -22,10 +22,11 @@ step_size = (1., 1.)
 beta = 2
 noise = 0.001
 epochs = 10
+maximum_distance = 5.
 
 def init_multi_safe_agents(num_multi_safe_agents, num_agents, init_x, init_y,
                             init_x_explore, init_y_explore, S0, h, c,
-                            world_shape, step_size):
+                            world_shape, step_size, max_dist):
     agents = []
     for i in range(num_multi_safe_agents):
         self_reward_kernel = GPy.kern.RBF(input_dim=2, lengthscale=(2., 2.), variance=1., ARD=True)
@@ -62,13 +63,14 @@ def init_multi_safe_agents(num_multi_safe_agents, num_agents, init_x, init_y,
             S0,
             S0[i],
             S0[:i] + S0[i + 1:],
-            num_agents
+            num_agents,
+            maximum_distance=max_dist
         )]
 
     return agents
 
 def init_single_safe_agents(num_multi_safe_agents, num_single_safe_agents, num_agents,
-                            init_x, init_y, S0, h, c, world_shape, step_size):
+                            init_x, init_y, S0, h, c, world_shape, step_size, max_dist):
     agents = []
     for i in range(num_single_safe_agents):
         self_reward_kernel = GPy.kern.RBF(input_dim=2, lengthscale=(2., 2.), variance=1., ARD=True)
@@ -87,13 +89,14 @@ def init_single_safe_agents(num_multi_safe_agents, num_single_safe_agents, num_a
             S0,
             S0[i + num_multi_safe_agents],
             S0[:i + num_multi_safe_agents] + S0[i + num_multi_safe_agents + 1:],
-            num_agents
+            num_agents,
+            maximum_distance=max_dist
         )]
 
     return agents
 
 def init_epsilon_greedy_agents(num_multi_safe_agents, num_single_safe_agents, num_epsilon_greedy_agents,
-                            num_agents, true_value_function, S0, h, c, world_shape, step_size, epsilon):
+                            num_agents, true_value_function, S0, h, c, world_shape, step_size, epsilon, max_dist):
     agents = []
     prev_num_agents = num_multi_safe_agents + num_single_safe_agents
     for i in range(num_epsilon_greedy_agents):
@@ -108,7 +111,8 @@ def init_epsilon_greedy_agents(num_multi_safe_agents, num_single_safe_agents, nu
             S0[:i + prev_num_agents] + S0[i + prev_num_agents + 1:],
             num_agents,
             true_value_function,
-            epsilon
+            epsilon,
+            maximum_distance=max_dist
         )]
 
     return agents
@@ -130,9 +134,27 @@ def main(args):
 
     init_x, init_y = init_dummy_xy(world_shape, step_size, altitudes)
     init_x_explore, init_y_explore = init_dummy_xy_explore(world_shape, step_size)
-    num_multi_safe_agents = int(args.num_multi_safe_agents)
-    num_single_safe_agents = int(args.num_single_safe_agents)
-    num_epsilon_greedy_agents = int(args.num_epsilon_greedy_agents)
+    max_dist = 0.
+    if args.collab == '0':
+        num_multi_safe_agents = int(args.num_multi_safe_agents)
+        num_single_safe_agents = int(args.num_single_safe_agents)
+        num_epsilon_greedy_agents = int(args.num_epsilon_greedy_agents)
+    elif args.collab == '1':
+        num_multi_safe_agents = 2
+        num_single_safe_agents = 0
+        num_epsilon_greedy_agents = 0
+        max_dist = maximum_distance
+    elif args.collab == '2':
+        num_multi_safe_agents = 0
+        num_single_safe_agents = 2
+        num_epsilon_greedy_agents = 0
+        max_dist = maximum_distance
+    else:
+        num_multi_safe_agents = 0
+        num_single_safe_agents = 0
+        num_epsilon_greedy_agents = 2
+        max_dist = maximum_distance
+
     print('Config: We have {0} Multiagent SafeMDP agents, {1} Iterative SafeMDP agents and {2} e-greedy agents'.format(
         num_multi_safe_agents,
         num_single_safe_agents,
@@ -160,11 +182,15 @@ def main(args):
     single_safe_agents_joint_unsafe = np.array([0 for _ in range(epochs)])
     epsilon_greedy_agents_unsafe = np.array([0 for _ in range(epochs)])
     epsilon_greedy_agents_joint_unsafe = np.array([0 for _ in range(epochs)])
+    collaborative_joint_unsafe = np.array([0 for _ in range(epochs)])
 
     for ep in range(epochs):
         print(ep)
-        np.random.shuffle(S)
-        S0 = S[:num_agents]
+        if args.collab == '0':
+            np.random.shuffle(S)
+            S0 = S[:num_agents]
+        else:
+            S0 = [(1, 5), (4, 2)]
 
         multi_safe_agents = init_multi_safe_agents(
             num_multi_safe_agents,
@@ -177,7 +203,8 @@ def main(args):
             h,
             c,
             world_shape,
-            step_size
+            step_size,
+            max_dist
         )
         single_safe_agents = init_single_safe_agents(
             num_multi_safe_agents,
@@ -189,7 +216,8 @@ def main(args):
             h,
             c,
             world_shape,
-            step_size
+            step_size,
+            max_dist
         )
         epsilon_greedy_agents = init_epsilon_greedy_agents(
             num_multi_safe_agents,
@@ -202,7 +230,8 @@ def main(args):
             c,
             world_shape,
             step_size,
-            epsilon
+            epsilon,
+            max_dist
         )
         agents = multi_safe_agents + single_safe_agents + epsilon_greedy_agents
 
@@ -238,6 +267,11 @@ def main(args):
                     agents[agent].update_others_pos(new_pos[:agent] + new_pos[agent + 1:])
                     agents[agent].update_others_reward(new_rewards[:agent] + new_rewards[agent + 1:])
 
+            if args.collab != '0':
+                if np.linalg.norm(new_pos[0] - new_pos[1]) > max_dist \
+                    or np.linalg.norm(new_pos[0] - new_pos[1]) <= max_dist - 1:
+                    collaborative_joint_unsafe[ep] += 1
+
         for agent in range(num_agents):
             if agent < num_multi_safe_agents:
                 multi_safe_agents_unsafe[ep] += agents[agent].num_unsafe
@@ -267,6 +301,7 @@ def main(args):
     print(single_safe_agents_unsafe)
     print(epsilon_greedy_agents_joint_unsafe)
     print(epsilon_greedy_agents_unsafe)
+    print(collaborative_joint_unsafe)
 
 
 if __name__ == '__main__':
@@ -278,5 +313,6 @@ if __name__ == '__main__':
     parser.add_argument('h', help='safety threshold')
     parser.add_argument('c', help='joint safety threshold')
     parser.add_argument('multi', help='0 for no multiprocessing, 1 for multiprocessing')
+    parser.add_argument('collab', help='0 for non-collaborative, 1 for multi-collaborative, 2 for e-greedy-collaborative')
     args = parser.parse_args()
     main(args)

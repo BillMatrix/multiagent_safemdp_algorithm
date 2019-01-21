@@ -31,7 +31,7 @@ def move_coordinate(start_coord, action, world_shape, step_size):
     return new_coord
 
 def plot_altitudes(altitudes, title):
-    plt.imshow(altitudes.T, origin="lower", interpolation="nearest")
+    plt.imshow(altitudes.T, origin="lower", interpolation="nearest", cmap='RdYlGn')
     plt.colorbar()
     plt.title(title)
     plt.show()

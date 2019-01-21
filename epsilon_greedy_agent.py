@@ -9,7 +9,7 @@ from helper import action_move_dict, reverse_action_dict, move_coordinate
 
 class EpsilonGreedyAgent():
     def __init__(self, index, world_shape, step_size, h, c, S0, my_pos,
-                others_pos, num_agents, value_functions, epsilon):
+                others_pos, num_agents, value_functions, epsilon, maximum_distance=0):
         self.index = index
         self.S = S0.copy()
         self.world_shape = world_shape
@@ -20,6 +20,9 @@ class EpsilonGreedyAgent():
         self.others_pos = others_pos
         self.num_other_agents = num_agents - 1
         self.value_functions = value_functions
+        self.maximum_distance = maximum_distance
+        if self.maximum_distance != 0:
+            self.c = -self.c
 
         self.other_agent_vacancy = np.zeros(world_shape)
         self.other_agent_vacancy[:, :] = 1.
@@ -49,10 +52,21 @@ class EpsilonGreedyAgent():
         for action in range(5):
             next_coord = move_coordinate(self.my_pos, action, self.world_shape, self.step_size)
             self_possible_coords += [next_coord]
-            prob_vacancy = self.other_agent_vacancy[
-                int(next_coord[0] / self.step_size[0]),
-                int(next_coord[1] / self.step_size[1])
-            ]
+            prob_vacancy = 0.0
+            if self.maximum_distance == 0:
+                prob_vacancy = self.other_agent_vacancy[
+                    int(next_coord[0] / self.step_size[0]),
+                    int(next_coord[1] / self.step_size[1])
+                ]
+            else:
+                for i in range(self.world_shape[0]):
+                    for j in range(self.world_shape[1]):
+                        cur_coord = np.array([i * self.step_size[0], j * self.step_size[1]])
+                        if self.other_agent_vacancy[i, j] != 1.0 \
+                                and np.linalg.norm(cur_coord - next_coord) <= self.maximum_distance \
+                                and np.linalg.norm(cur_coord - next_coord) > self.maximum_distance - 1:
+                            prob_vacancy = max(prob_vacancy, self.other_agent_vacancy[i, j])
+                prob_vacancy = -prob_vacancy
             self_possible_vacancy += [prob_vacancy]
             lr = self.value_functions[
                 int(next_coord[0] / self.step_size[0]),

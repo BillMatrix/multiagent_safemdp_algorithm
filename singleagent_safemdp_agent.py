@@ -9,7 +9,7 @@ from helper import action_move_dict, reverse_action_dict, move_coordinate
 
 class SingleagentSafeMDPAgent():
     def __init__(self, index, self_rewards_gp, world_shape, step_size, beta, h, c, S0, my_pos,
-                others_pos, num_agents, gamma=0.9):
+                others_pos, num_agents, maximum_distance=0, gamma=0.9):
         self.index = index
         self.S = S0.copy()
         self.rewards_gp = self_rewards_gp
@@ -22,6 +22,9 @@ class SingleagentSafeMDPAgent():
         self.my_pos = my_pos
         self.others_pos = others_pos
         self.num_other_agents = num_agents - 1
+        self.maximum_distance = maximum_distance
+        if self.maximum_distance != 0:
+            self.c = -self.c
 
         self.self_l = np.zeros(world_shape)
         self.self_u = np.zeros(world_shape)
@@ -62,10 +65,22 @@ class SingleagentSafeMDPAgent():
         for action in range(1, 5):
             next_coord = move_coordinate(self.my_pos, action, self.world_shape, self.step_size)
             self_possible_coords += [next_coord]
-            prob_vacancy = self.other_agent_vacancy[
-                int(next_coord[0] / self.step_size[0]),
-                int(next_coord[1] / self.step_size[1])
-            ]
+            prob_vacancy = 0.0
+            if self.maximum_distance == 0:
+                prob_vacancy = self.other_agent_vacancy[
+                    int(next_coord[0] / self.step_size[0]),
+                    int(next_coord[1] / self.step_size[1])
+                ]
+            else:
+                for i in range(self.world_shape[0]):
+                    for j in range(self.world_shape[1]):
+                        cur_coord = np.array([i * self.step_size[0], j * self.step_size[1]])
+                        if self.other_agent_vacancy[i, j] != 1.0 \
+                                and np.linalg.norm(cur_coord - next_coord) <= self.maximum_distance \
+                                and np.linalg.norm(cur_coord - next_coord) > self.maximum_distance - 1:
+                            prob_vacancy = max(prob_vacancy, self.other_agent_vacancy[i, j])
+                prob_vacancy = -prob_vacancy
+
             self_possible_vacancy += [prob_vacancy]
             lr = self.self_l[
                 int(next_coord[0] / self.step_size[0]),
