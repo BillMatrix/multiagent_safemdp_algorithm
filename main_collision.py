@@ -2,6 +2,7 @@ from __future__ import division, print_function, absolute_import
 
 import time
 import argparse
+from multiprocessing import Pool, cpu_count
 
 import GPy
 import matplotlib.pyplot as plt
@@ -49,6 +50,7 @@ def init_multi_safe_agents(num_multi_safe_agents, num_agents, init_x, init_y,
             others_explore_gps += [explore_gp]
 
         agents += [MultiagentSafeMDPAgent(
+            i,
             self_gp,
             others_explore_gps,
             others_reward_gps,
@@ -75,6 +77,7 @@ def init_single_safe_agents(num_multi_safe_agents, num_single_safe_agents, num_a
         self_gp = GPy.core.GP(init_x, init_y, self_reward_kernel, self_reward_lik)
 
         agents += [SingleagentSafeMDPAgent(
+            i + num_multi_safe_agents,
             self_gp,
             world_shape,
             step_size,
@@ -95,6 +98,7 @@ def init_epsilon_greedy_agents(num_multi_safe_agents, num_single_safe_agents, nu
     prev_num_agents = num_multi_safe_agents + num_single_safe_agents
     for i in range(num_epsilon_greedy_agents):
         agents += [EpsilonGreedyAgent(
+            i + prev_num_agents,
             world_shape,
             step_size,
             h,
@@ -108,6 +112,13 @@ def init_epsilon_greedy_agents(num_multi_safe_agents, num_single_safe_agents, nu
         )]
 
     return agents
+
+def update_agents(agent):
+    agent.update_self_reward_observation(agent.new_reward)
+    agent.update_others_act(agent.new_act)
+    agent.update_others_pos(agent.new_pos)
+    agent.update_others_reward(agent.new_rewards)
+    return agent
 
 def main(args):
     if args.map == 'mars':
@@ -207,12 +218,26 @@ def main(args):
 
                 reward = altitudes[int(next_s[0] / step_size[0]), int(next_s[1] / step_size[1])]
                 new_rewards += [reward]
-                agents[agent].update_self_reward_observation(reward)
+                agents[agent].new_reward = reward
 
             for agent in range(num_agents):
-                agents[agent].update_others_act(new_act[:agent] + new_act[agent + 1:])
-                agents[agent].update_others_pos(new_pos[:agent] + new_pos[agent + 1:])
-                agents[agent].update_others_reward(new_rewards[:agent] + new_rewards[agent + 1:])
+                agents[agent].new_act = new_act[:agent] + new_act[agent + 1:]
+                agents[agent].new_pos = new_pos[:agent] + new_pos[agent + 1:]
+                agents[agent].new_rewards = new_rewards[:agent] + new_rewards[agent + 1:]
+
+            while True:
+                try:
+                    p = Pool(cpu_count())
+                    agents = p.map(update_agents, agents)
+                    break
+                except:
+                    pass
+
+            # for agent in range(num_agents):
+            #     agents[agent].update_self_reward_observation(reward)
+            #     agents[agent].update_others_act(new_act[:agent] + new_act[agent + 1:])
+            #     agents[agent].update_others_pos(new_pos[:agent] + new_pos[agent + 1:])
+            #     agents[agent].update_others_reward(new_rewards[:agent] + new_rewards[agent + 1:])
 
         for agent in range(num_agents):
             if agent < num_multi_safe_agents:

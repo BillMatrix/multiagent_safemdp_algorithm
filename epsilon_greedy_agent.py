@@ -8,8 +8,9 @@ from scipy.optimize import minimize
 from helper import action_move_dict, reverse_action_dict, move_coordinate
 
 class EpsilonGreedyAgent():
-    def __init__(self, world_shape, step_size, h, c, S0, my_pos,
+    def __init__(self, index, world_shape, step_size, h, c, S0, my_pos,
                 others_pos, num_agents, value_functions, epsilon):
+        self.index = index
         self.S = S0.copy()
         self.world_shape = world_shape
         self.step_size = step_size

@@ -8,8 +8,9 @@ from scipy.optimize import minimize
 from helper import action_move_dict, reverse_action_dict, move_coordinate
 
 class SingleagentSafeMDPAgent():
-    def __init__(self, self_rewards_gp, world_shape, step_size, beta, h, c, S0, my_pos,
+    def __init__(self, index, self_rewards_gp, world_shape, step_size, beta, h, c, S0, my_pos,
                 others_pos, num_agents, gamma=0.9):
+        self.index = index
         self.S = S0.copy()
         self.rewards_gp = self_rewards_gp
         self.world_shape = world_shape
@@ -35,6 +36,10 @@ class SingleagentSafeMDPAgent():
         self.num_unsafe = 0
         self.num_joint_unsafe = 0
         self.coords_visited = []
+        self.new_reward = 0
+        self.new_act = []
+        self.new_pos = []
+        self.new_rewards = []
 
     def choose_action(self):
         for agent in range(self.num_other_agents):
