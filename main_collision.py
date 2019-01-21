@@ -220,24 +220,25 @@ def main(args):
                 new_rewards += [reward]
                 agents[agent].new_reward = reward
 
-            for agent in range(num_agents):
-                agents[agent].new_act = new_act[:agent] + new_act[agent + 1:]
-                agents[agent].new_pos = new_pos[:agent] + new_pos[agent + 1:]
-                agents[agent].new_rewards = new_rewards[:agent] + new_rewards[agent + 1:]
+            if args.multi == '1':
+                for agent in range(num_agents):
+                    agents[agent].new_act = new_act[:agent] + new_act[agent + 1:]
+                    agents[agent].new_pos = new_pos[:agent] + new_pos[agent + 1:]
+                    agents[agent].new_rewards = new_rewards[:agent] + new_rewards[agent + 1:]
 
-            while True:
-                try:
-                    p = Pool(cpu_count())
-                    agents = p.map(update_agents, agents)
-                    break
-                except:
-                    pass
-
-            # for agent in range(num_agents):
-            #     agents[agent].update_self_reward_observation(reward)
-            #     agents[agent].update_others_act(new_act[:agent] + new_act[agent + 1:])
-            #     agents[agent].update_others_pos(new_pos[:agent] + new_pos[agent + 1:])
-            #     agents[agent].update_others_reward(new_rewards[:agent] + new_rewards[agent + 1:])
+                while True:
+                    try:
+                        p = Pool(cpu_count())
+                        agents = p.map(update_agents, agents)
+                        break
+                    except:
+                        pass
+            else:
+                for agent in range(num_agents):
+                    agents[agent].update_self_reward_observation(reward)
+                    agents[agent].update_others_act(new_act[:agent] + new_act[agent + 1:])
+                    agents[agent].update_others_pos(new_pos[:agent] + new_pos[agent + 1:])
+                    agents[agent].update_others_reward(new_rewards[:agent] + new_rewards[agent + 1:])
 
         for agent in range(num_agents):
             if agent < num_multi_safe_agents:
@@ -278,5 +279,6 @@ if __name__ == '__main__':
     parser.add_argument('num_epsilon_greedy_agents', help='number of epsilon greedy agents')
     parser.add_argument('h', help='safety threshold')
     parser.add_argument('c', help='joint safety threshold')
+    parser.add_argument('multi', help='0 for no multiprocessing, 1 for multiprocessing')
     args = parser.parse_args()
     main(args)
