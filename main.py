@@ -146,11 +146,6 @@ def main(args):
         max_dist = maximum_distance
     elif args.collab == '2':
         num_multi_safe_agents = 0
-        num_single_safe_agents = 2
-        num_epsilon_greedy_agents = 0
-        max_dist = maximum_distance
-    else:
-        num_multi_safe_agents = 0
         num_single_safe_agents = 0
         num_epsilon_greedy_agents = 2
         max_dist = maximum_distance
@@ -190,7 +185,7 @@ def main(args):
             np.random.shuffle(S)
             S0 = S[:num_agents]
         else:
-            S0 = [(1, 5), (4, 2)]
+            S0 = S[:num_agents]
 
         multi_safe_agents = init_multi_safe_agents(
             num_multi_safe_agents,
@@ -295,13 +290,27 @@ def main(args):
         epsilon_greedy_agents_unsafe = epsilon_greedy_agents_unsafe / num_epsilon_greedy_agents
         epsilon_greedy_agents_joint_unsafe = epsilon_greedy_agents_joint_unsafe / num_epsilon_greedy_agents
 
-    print(multi_safe_agents_joint_unsafe)
-    print(multi_safe_agents_unsafe)
-    print(single_safe_agents_joint_unsafe)
-    print(single_safe_agents_unsafe)
-    print(epsilon_greedy_agents_joint_unsafe)
-    print(epsilon_greedy_agents_unsafe)
-    print(collaborative_joint_unsafe)
+    if num_multi_safe_agents != 0:
+        print('Multi-agent Joint Unsafe States:')
+        print(multi_safe_agents_joint_unsafe)
+        print('Multi-agent Unsafe States:')
+        print(multi_safe_agents_unsafe)
+
+    if num_single_safe_agents != 0:
+        print('Iterative SafeMDP Joint Unsafe States:')
+        print(single_safe_agents_joint_unsafe)
+        print('Iterative SafeMDP Unsafe States:')
+        print(single_safe_agents_unsafe)
+
+    if num_epsilon_greedy_agents != 0:
+        print('Epsilon Greedy Joint Unsafe States:')
+        print(epsilon_greedy_agents_joint_unsafe)
+        print('Epsilon Greedy Unsafe States:')
+        print(epsilon_greedy_agents_unsafe)
+
+    if args.collab != '0':
+        print('Collaborative Joint Unsafe States')
+        print(collaborative_joint_unsafe)
 
 
 if __name__ == '__main__':
@@ -310,9 +319,9 @@ if __name__ == '__main__':
     parser.add_argument('num_multi_safe_agents', help='number of multiagent safe algorithm agents')
     parser.add_argument('num_single_safe_agents', help='number of iterative safeMDP agents')
     parser.add_argument('num_epsilon_greedy_agents', help='number of epsilon greedy agents')
+    parser.add_argument('collab', help='0 for non-collaborative, 1 for multi-collaborative, 2 for e-greedy-collaborative')
     parser.add_argument('h', help='safety threshold')
     parser.add_argument('c', help='joint safety threshold')
     parser.add_argument('multi', help='0 for no multiprocessing, 1 for multiprocessing')
-    parser.add_argument('collab', help='0 for non-collaborative, 1 for multi-collaborative, 2 for e-greedy-collaborative')
     args = parser.parse_args()
     main(args)
