@@ -116,9 +116,9 @@ class MultiagentSafeMDPAgent():
             ]
             self_possible_safety += [lr]
             visited = False
-            # for c in self.my_traj:
-            #     if c[0] == next_coord[0] and c[1] == next_coord[1]:
-            #         visited = True
+            for c in self.my_traj:
+                if c[0] == next_coord[0] and c[1] == next_coord[1]:
+                    visited = True
             if lr > self.h and prob_vacancy > self.c and self._returnable(next_coord) and not visited:
                 self_possible_actions += [action]
 
