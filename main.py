@@ -21,7 +21,7 @@ toy_world_shape = (8, 8)
 step_size = (1., 1.)
 beta = 2
 noise = 0.001
-epochs = 1
+epochs = 10
 maximum_distance = 5.
 
 def init_multi_safe_agents(num_multi_safe_agents, num_agents, init_x, init_y,
