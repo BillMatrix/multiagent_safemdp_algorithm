@@ -312,6 +312,10 @@ def main(args):
         print('Collaborative Joint Unsafe States')
         print(collaborative_joint_unsafe)
 
+    for i in range(world_shape[0]):
+        for j in range(world_shape[1]):
+            
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

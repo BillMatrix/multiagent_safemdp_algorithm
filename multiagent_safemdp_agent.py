@@ -258,36 +258,20 @@ class MultiagentSafeMDPAgent():
             diff = cur_diff
 
     def _get_exploit_upper_bound(self, agent, coord, possible_coords):
-        if self.value:
-            denominator_prefix = sum(
-                [np.exp(self.others_value_func_l[
-                    agent,
-                    int(c[0] / self.step_size[0]),
-                    int(c[1] / self.step_size[1])
-                ])
-                for c in possible_coords if c[0] != coord[0] or c[1] != coord[1]]
-            )
-            nominator = np.exp(
-                self.others_value_func_u[
-                    agent,
-                    int(coord[0] / self.step_size[0]),
-                    int(coord[1] / self.step_size[1])
-                ])
-        else:
-            denominator_prefix = sum(
-                [np.exp(self.others_l[
-                    agent,
-                    int(c[0] / self.step_size[0]),
-                    int(c[1] / self.step_size[1])
-                ])
-                for c in possible_coords if c[0] != coord[0] or c[1] != coord[1]]
-            )
-            nominator = np.exp(
-                self.others_value_func_u[
-                    agent,
-                    int(coord[0] / self.step_size[0]),
-                    int(coord[1] / self.step_size[1])
-                ])
+        denominator_prefix = sum(
+            [np.exp(self.others_value_func_l[
+                agent,
+                int(c[0] / self.step_size[0]),
+                int(c[1] / self.step_size[1])
+            ])
+            for c in possible_coords if c[0] != coord[0] or c[1] != coord[1]]
+        )
+        nominator = np.exp(
+            self.others_value_func_u[
+                agent,
+                int(coord[0] / self.step_size[0]),
+                int(coord[1] / self.step_size[1])
+            ])
         denominator = nominator + denominator_prefix
         prob_action_exploit = nominator / denominator
         return prob_action_exploit
