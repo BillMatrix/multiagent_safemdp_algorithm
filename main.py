@@ -21,7 +21,7 @@ toy_world_shape = (8, 8)
 step_size = (1., 1.)
 beta = 2
 noise = 0.001
-epochs = 10
+epochs = 1
 maximum_distance = 5.
 
 def init_multi_safe_agents(num_multi_safe_agents, num_agents, init_x, init_y,
@@ -239,7 +239,7 @@ def main(args):
                 new_pos += [next_s]
                 new_act += [next_a]
 
-                reward = altitudes[int(next_s[0] / step_size[0]), int(next_s[1] / step_size[1])]
+                reward = altitudes[int(next_s[0] / step_size[0]), int(next_s[1] / step_size[1])] + 0.01 * np.random.randn()
                 new_rewards += [reward]
                 agents[agent].update_self_reward_observation(reward)
 
@@ -312,19 +312,19 @@ def main(args):
         print('Collaborative Joint Unsafe States')
         print(collaborative_joint_unsafe)
 
-    heat_map = np.zeros((world_shape))
-    for i in range(world_shape[0]):
-        for j in range(world_shape[1]):
-            coord = np.array([[i * step_size[0], j * step_size[1]]])
-            reward, _ = agents[0].rewards_gp.predict(
-                coord,
-                kern=agents[0].rewards_gp.kern,
-                full_cov=False
-            )
-            heat_map[j, i] = reward
-
-    plt.imshow(heat_map)
-    plt.show()
+    # heat_map = np.zeros((world_shape))
+    # for i in range(world_shape[0]):
+    #     for j in range(world_shape[1]):
+    #         coord = np.array([[i * step_size[0], j * step_size[1]]])
+    #         reward, _ = agents[0].rewards_gp.predict(
+    #             coord,
+    #             kern=agents[0].rewards_gp.kern,
+    #             full_cov=False
+    #         )
+    #         heat_map[j, i] = reward
+    #
+    # plt.imshow(heat_map)
+    # plt.show()
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

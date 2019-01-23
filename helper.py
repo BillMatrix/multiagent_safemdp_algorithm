@@ -37,12 +37,15 @@ def plot_altitudes(altitudes, title):
     plt.show()
 
 def init_dummy_xy(world_shape, step_size, altitudes):
-    i = np.random.choice(world_shape[0], 1)[0]
-    j = np.random.choice(world_shape[1], 1)[0]
-    coord = np.array([[i * step_size[0], j * step_size[1]]])
-    dummy_y = np.array([[altitudes[i, j]]]) + np.random.randn(1, 1)
+    coord = []
+    dummy_y = []
+    for _ in range(5):
+        i = np.random.choice(world_shape[0], 1)[0]
+        j = np.random.choice(world_shape[1], 1)[0]
+        coord += [[i * step_size[0], j * step_size[1]]]
+        dummy_y += [[altitudes[i, j] + 0.01 * np.random.randn()]]
 
-    return coord, dummy_y
+    return np.array(coord), np.array(dummy_y)
 
 def init_dummy_xy_explore(world_shape, step_size):
     return np.array([[0., 0., 0., 0.]]), np.array([[0.]])
