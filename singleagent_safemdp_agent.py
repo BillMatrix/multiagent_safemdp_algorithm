@@ -20,6 +20,8 @@ class SingleagentSafeMDPAgent():
         self.c = c
         self.gamma = gamma
         self.my_pos = my_pos
+        self.my_traj = []
+        self.my_rewards = []
         self.others_pos = others_pos
         self.num_other_agents = num_agents - 1
         self.maximum_distance = maximum_distance
@@ -87,12 +89,16 @@ class SingleagentSafeMDPAgent():
                 int(next_coord[1] / self.step_size[1])
             ]
             self_possible_safety += [lr]
-            if lr > self.h and prob_vacancy > self.c and self._returnable(next_coord):
+            visited = False
+            for c in self.my_traj:
+                if c[0] == next_coord[0] and c[1] == next_coord[1]:
+                    visited = True
+            if lr > self.h and prob_vacancy > self.c and self._returnable(next_coord) and not visited:
                 self_possible_actions += [action]
 
         if len(self_possible_actions) == 0:
             action, value = max(enumerate(self_possible_safety), key=operator.itemgetter(1))
-            target_coord = self_possible_coords[action]
+            target_coord = self_possible_coords[action - 1]
             self.my_pos = target_coord
             visited = False
             for c in self.coords_visited:
@@ -101,6 +107,7 @@ class SingleagentSafeMDPAgent():
 
             if not visited:
                 self.coords_visited += [target_coord]
+            self.my_traj += [target_coord]
             return action, target_coord
 
         target_coord = self.my_pos
@@ -129,13 +136,16 @@ class SingleagentSafeMDPAgent():
 
         if not visited:
             self.coords_visited += [target_coord]
-
+        self.my_traj += [target_coord]
         return target_action, target_coord
 
     def update_self_reward_observation(self, reward):
+        self.my_rewards += [[reward]]
+        # print(self.my_traj)
+        # print(self.my_rewards)
         self.rewards_gp.set_XY(
-            np.array([self.my_pos]),
-            np.array([[reward]]),
+            np.array(self.my_traj),
+            np.array(self.my_rewards),
         )
         if reward < self.h:
             self.num_unsafe += 1
