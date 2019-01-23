@@ -203,7 +203,7 @@ class MultiagentSafeMDPAgent():
                     self.others_explore_trajs[agent] += [[prev_coord[0], prev_coord[1], cur_coord[0], cur_coord[1]]]
                     self.others_explore_obs[agent] += [[0.]]
                 else:
-                    self.others_explore_gp[agent] += [[prev_coord[0], prev_coord[1], cur_coord[0], cur_coord[1]]]
+                    self.others_explore_trajs[agent] += [[prev_coord[0], prev_coord[1], cur_coord[0], cur_coord[1]]]
                     self.others_explore_obs[agent] += [[1.]]
             self.others_explore_gp[agent].set_XY(
                 np.array(self.others_explore_trajs[agent]),
