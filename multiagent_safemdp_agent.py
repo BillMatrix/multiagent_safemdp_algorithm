@@ -10,7 +10,7 @@ from helper import action_move_dict, reverse_action_dict, move_coordinate
 class MultiagentSafeMDPAgent():
     def __init__(self, index, self_rewards_gp, others_explore_gp, others_rewards_gp,
                 world_shape, step_size, beta, h, c, S0, my_pos,
-                others_pos, num_agents, value, maximum_distance=0, gamma=0.9):
+                others_pos, num_agents, maximum_distance=0, gamma=0.9):
         self.index = index
         self.S = S0.copy()
         self.rewards_gp = self_rewards_gp
@@ -26,7 +26,6 @@ class MultiagentSafeMDPAgent():
         self.others_pos = others_pos
         self.num_other_agents = num_agents - 1
         self.maximum_distance = maximum_distance
-        self.value = value
 
         self.self_l = np.zeros(world_shape)
         self.self_u = np.zeros(world_shape)
