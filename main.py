@@ -64,6 +64,7 @@ def init_multi_safe_agents(num_multi_safe_agents, num_agents, init_x, init_y,
             S0[i],
             S0[:i] + S0[i + 1:],
             num_agents,
+            num_multi_safe_agents > 0,
             maximum_distance=max_dist
         )]
 
